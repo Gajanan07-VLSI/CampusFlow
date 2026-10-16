@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusFlow — ERP &amp; LMS Student Portal</title>
+  <style>
+    /* ===== 1. THEME VARIABLES (light is default, dark overrides) ===== */
+    :root {
+      --navy: #1e2a5a;
+      --indigo: #4f46e5;
+      --bg: #f1f3f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --side: #1e2a5a;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #334155;
+      --side: #0b1220;
+    }
+
+    /* ===== 2. BASE ===== */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    h1, h2, h3 { margin: 0 0 .5rem; line-height: 1.25; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.15rem; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+    /* ===== 3. LAYOUT: sidebar + main ===== */
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar {
+      background: var(--side);
+      color: #e0e7ff;
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .brand { font-size: 1.3rem; font-weight: 700; color: #fff; }
+    .brand span { color: #a5b4fc; }
+    .nav { display: flex; flex-direction: column; gap: .35rem; }
+    .nav button {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      text-align: left;
+      padding: .65rem .85rem;
+      border-radius: 10px;
+      font-size: .95rem;
+      cursor: pointer;
+    }
+    .nav button:hover { background: rgba(255,255,255,.08); }
+    .nav button[aria-current="page"] { background: var(--indigo); color: #fff; font-weight: 600; }
+    .sidebar-foot { margin-top: auto; font-size: .8rem; color: #a5b4fc; }
+
+    .main { padding: 1.5rem; max-width: 1200px; width: 100%; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .btn {
+      background: var(--indigo); color: #fff; border: 0;
+      padding: .55rem 1rem; border-radius: 10px; cursor: pointer; font-weight: 600;
+    }
+    .btn:hover { opacity: .92; }
+    .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+    /* ===== 4. CARDS, GRIDS, PROGRESS BARS ===== */
+    .page[hidden] { display: none; }
+    .grid { display: grid; gap: 1rem; }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .grid > .card { margin-bottom: 0; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--indigo); }
+    .section-title { margin: 1.5rem 0 .75rem; }
+
+    .progress { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; margin: .5rem 0 .25rem; }
+    .progress > div { height: 100%; background: linear-gradient(90deg, var(--indigo), #818cf8); border-radius: 999px; transition: width .4s; }
+
+    .course-icon { font-size: 1.8rem; }
+    .code { display: inline-block; font-size: .75rem; background: var(--bg); padding: .15rem .5rem; border-radius: 6px; color: var(--muted); }
+
+    /* ===== 5. LISTS, TASKS, FORMS ===== */
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li { padding: .6rem 0; border-bottom: 1px solid var(--border); }
+    .list li:last-child { border-bottom: 0; }
+    .task { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+    .task label { display: flex; align-items: center; gap: .6rem; cursor: pointer; }
+    .task.done span.title { text-decoration: line-through; color: var(--muted); }
+    .badge { font-size: .75rem; padding: .2rem .6rem; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.done { background: #dcfce7; color: #166534; }
+    .badge.overdue { background: #fee2e2; color: #991b1b; }
+    [data-theme="dark"] .badge.pending { background: #451a03; color: #fcd34d; }
+    [data-theme="dark"] .badge.done { background: #052e16; color: #86efac; }
+
+    form.add { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: .6rem; align-items: end; }
+    label.field { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: .25rem; }
+    input, select {
+      font: inherit; padding: .55rem .7rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    }
+    input:focus, select:focus, button:focus-visible, .nav button:focus-visible {
+      outline: 3px solid #a5b4fc; outline-offset: 2px;
+    }
+    .feedback { min-height: 1.4rem; margin-top: .6rem; font-size: .9rem; }
+    .feedback.error { color: #dc2626; }
+    .feedback.success { color: var(--ok); }
+    .empty { text-align: center; padding: 1.5rem; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
+
+    /* ===== 6. TABLE ===== */
+    table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    th, td { text-align: left; padding: .7rem .5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; width: 40%; }
+    .notice { font-size: .85rem; background: #eef2ff; color: #3730a3; padding: .6rem .8rem; border-radius: 10px; margin-top: .75rem; }
+    [data-theme="dark"] .notice { background: #1e1b4b; color: #c7d2fe; }
+
+    .footer-note { margin-top: 2rem; font-size: .8rem; color: var(--muted); text-align: center; }
+
+    /* ===== 7. RESPONSIVE ===== */
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { padding: .75rem 1rem; flex-direction: row; align-items: center; position: sticky; top: 0; z-index: 10; gap: 1rem; }
+      .brand { font-size: 1.1rem; white-space: nowrap; }
+      .nav { flex-direction: row; overflow-x: auto; flex: 1; }
+      .nav button { white-space: nowrap; padding: .5rem .7rem; }
+      .sidebar-foot { display: none; }
+      .main { padding: 1rem; }
+      form.add { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== SIDEBAR NAVIGATION ===== -->
+  <aside class="sidebar">
+    <div class="brand">Campus<span>Flow</span></div>
+    <nav class="nav" aria-label="Main navigation">
+      <!-- data-page tells the JavaScript which page to show -->
+      <button data-page="dashboard" aria-current="page">🏠 Dashboard</button>
+      <button data-page="courses">📚 My Courses</button>
+      <button data-page="assignments">📝 Assignments</button>
+      <button data-page="records">🎓 Student Records</button>
+    </nav>
+    <div class="sidebar-foot">Prototype · Demo data only</div>
+  </aside>
+
+  <main class="main" id="main">
+    <!-- Top bar with theme toggle -->
+    <div class="topbar">
+      <div>
+        <p class="muted" style="margin:0">Student Portal</p>
+      </div>
+      <button class="btn ghost" id="themeToggle" aria-label="Switch between light and dark theme">🌙 Dark mode</button>
+    </div>
+
+    <!-- ===== PAGE: DASHBOARD ===== -->
+    <section class="page" id="page-dashboard" aria-labelledby="dash-heading">
+      <div class="card">
+        <h1 id="dash-heading">Welcome back, Gajanan 👋</h1>
+        <p class="muted" style="margin:0">B.Tech · Electronics Engineering — VLSI Design and Technology · CSMSS Chh. Shahu College of Engineering</p>
+      </div>
+
+      <div class="grid grid-4">
+        <div class="card"><div class="muted">Enrolled courses</div><div class="stat-value" id="statCourses">0</div></div>
+        <div class="card"><div class="muted">Pending assignments</div><div class="stat-value" id="statPending">0</div></div>
+        <div class="card"><div class="muted">Attendance (sample)</div><div class="stat-value" id="statAttendance">0%</div></div>
+        <div class="card"><div class="muted">Learning progress</div><div class="stat-value" id="statProgress">0%</div></div>
+      </div>
+
+      <h2 class="section-title">Course progress</h2>
+      <div class="grid grid-3" id="dashCourses"></div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Upcoming assignments</h2>
+          <ul class="list" id="upcomingList"></ul>
+        </div>
+        <div class="card">
+          <h2>Announcements <span class="muted">(sample)</span></h2>
+          <ul class="list">
+            <li><strong>Mid-semester exams</strong><div class="muted">Timetable will be released by the exam cell next week.</div></li>
+            <li><strong>VLSI project showcase</strong><div class="muted">Sign-up for the department showcase is open this Friday.</div></li>
+            <li><strong>Library hours</strong><div class="muted">Extended evening hours during exam week.</div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: MY COURSES ===== -->
+    <section class="page" id="page-courses" hidden aria-labelledby="courses-heading">
+      <h1 id="courses-heading">My Courses</h1>
+      <p class="muted">Sample courses and progress for demonstration purposes.</p>
+      <div class="grid grid-3" id="allCourses"></div>
+    </section>
+
+    <!-- ===== PAGE: ASSIGNMENTS ===== -->
+    <section class="page" id="page-assignments" hidden aria-labelledby="assign-heading">
+      <h1 id="assign-heading">Assignments</h1>
+      <p class="muted">Tick a task to mark it complete. Add new tasks with the form below.</p>
+
+      <div class="card">
+        <h2>Add a new assignment</h2>
+        <form class="add" id="addForm" novalidate>
+          <label class="field">Title
+            <input type="text" id="taskTitle" placeholder="e.g. Write Verilog testbench" maxlength="80" required>
+          </label>
+          <label class="field">Course
+            <select id="taskCourse"></select>
+          </label>
+          <label class="field">Due date
+            <input type="date" id="taskDue">
+          </label>
+          <button class="btn" type="submit">Add task</button>
+        </form>
+        <div class="feedback" id="addFeedback" aria-live="polite"></div>
+      </div>
+
+      <div class="card">
+        <div class="topbar" style="margin-bottom:.5rem">
+          <h2 style="margin:0">Task checklist</h2>
+          <span class="badge pending" id="pendingBadge">0 pending</span>
+        </div>
+        <ul class="list" id="taskList" aria-label="Assignment checklist"></ul>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: STUDENT RECORDS ===== -->
+    <section class="page" id="page-records" hidden aria-labelledby="records-heading">
+      <h1 id="records-heading">Student Records</h1>
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Profile</h2>
+          <table>
+            <tr><th scope="row">Name</th><td>Gajanan Sunil Paralkar</td></tr>
+            <tr><th scope="row">Degree</th><td>B.Tech</td></tr>
+            <tr><th scope="row">Branch</th><td>Electronics Engineering — VLSI Design and Technology</td></tr>
+            <tr><th scope="row">College</th><td>CSMSS Chh. Shahu College of Engineering</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h2>Academic details</h2>
+          <table>
+            <tr><th scope="row">Year of study</th><td>2nd Year (sample)</td></tr>
+            <tr><th scope="row">Current semester</th><td>3rd (sample)</td></tr>
+            <tr><th scope="row">Expected graduation</th><td>2029</td></tr>
+            <tr><th scope="row">Overall attendance</th><td id="recAttendance">—</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="notice">⚠️ This is sample demonstration data. It is not an official academic record.</p>
+    </section>
+
+    <p class="footer-note">CampusFlow prototype · Sample data · No real login or database is used.</p>
+  </main>
+</div>
+
+<script>
+/* =====================================================================
+   1. SAMPLE DATA
+   In a real system this would come from a server. Here it lives in
+   memory, so it resets when the page is reloaded.
+   ===================================================================== */
+const state = {
+  courses: [
+    { code: "EE201", title: "Digital Electronics",         icon: "⚡", progress: 72, attended: 20, total: 24 },
+    { code: "EE305", title: "VLSI Design Fundamentals",    icon: "🔬", progress: 55, attended: 18, total: 22 },
+    { code: "EE302", title: "Analog Circuit Design",       icon: "📡", progress: 40, attended: 15, total: 20 },
+    { code: "EE308", title: "Verilog HDL Programming",     icon: "💻", progress: 84, attended: 21, total: 23 }
+  ],
+  assignments: [
+    { id: 1, title: "Truth tables for logic gates", course: "EE201", due: "2026-10-18", done: false },
+    { id: 2, title: "CMOS inverter lab report",     course: "EE305", due: "2026-10-21", done: true  },
+    { id: 3, title: "Op-amp filter design",         course: "EE302", due: "2026-10-25", done: false },
+    { id: 4, title: "Verilog counter testbench",    course: "EE308", due: "2026-10-30", done: false }
+  ]
+};
+let nextId = 5; // used to give new assignments a unique id
+
+
+/* =====================================================================
+   2. HELPERS
+   ===================================================================== */
+
+/**
+ * Escapes user-entered text so it is shown as plain text, not HTML.
+ * This protects the page from malicious input such as <script> tags.
+ */
+function esc(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
+
+/** Returns today's date as YYYY-MM-DD (matches the format of date inputs). */
+function todayStr() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Formats YYYY-MM-DD as a readable date like "18 Oct 2026". */
+function prettyDate(str) {
+  if (!str) return "No due date";
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Shows a success or error message under the add-task form. */
+function showFeedback(message, type) {
+  const box = document.getElementById("addFeedback");
+  box.textContent = message;
+  box.className = "feedback " + (type || "");
+}
+
+/* =====================================================================
+   3. PAGE NAVIGATION (no page reload)
+   ===================================================================== */
+
+/**
+ * Shows one page section and hides the rest.
+ * It also updates the sidebar button so the active page is highlighted.
+ */
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(section => {
+    section.hidden = section.id !== "page-" + name;
+  });
+  document.querySelectorAll(".nav button").forEach(btn => {
+    if (btn.dataset.page === name) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  });
+  document.getElementById("addFeedback").textContent = ""; // clear old messages
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* =====================================================================
+   4. RENDERING FUNCTIONS
+   Each function reads from `state` and rebuilds part of the page.
+   ===================================================================== */
+
+/** Builds the HTML for one course card (used on Dashboard and My Courses). */
+function courseCardHTML(c) {
+  return `
+    <article class="card" aria-label="${esc(c.title)}">
+      <div class="topbar" style="margin-bottom:.4rem">
+        <span class="course-icon" aria-hidden="true">${esc(c.icon)}</span>
+        <span class="code">${esc(c.code)}</span>
+      </div>
+      <h2>${esc(c.title)}</h2>
+      <div class="muted">Progress: ${c.progress}% · Attendance: ${c.attended}/${c.total} classes</div>
+      <div class="progress" role="progressbar" aria-label="${esc(c.title)} progress"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="${c.progress}">
+        <div style="width:${c.progress}%"></div>
+      </div>
+    </article>`;
+}
+
+/** Updates the four statistic cards on the Dashboard. */
+function renderStats() {
+  const pending = state.assignments.filter(a => !a.done).length;
+  const attended = state.courses.reduce((sum, c) => sum + c.attended, 0);
+  const total = state.courses.reduce((sum, c) => sum + c.total, 0);
+  const attendancePct = total ? Math.round((attended / total) * 100) : 0;
+  const avgProgress = state.courses.length
+    ? Math.round(state.courses.reduce((sum, c) => sum + c.progress, 0) / state.courses.length)
+    : 0;
+
+  document.getElementById("statCourses").textContent = state.courses.length;
+  document.getElementById("statPending").textContent = pending;
+  document.getElementById("statAttendance").textContent = attendancePct + "%";
+  document.getElementById("statProgress").textContent = avgProgress + "%";
+  document.getElementById("recAttendance").textContent = attendancePct + "% (sample)";
+  document.getElementById("pendingBadge").textContent = pending + " pending";
+}
+
+/** Shows the next 3 pending assignments on the Dashboard, sorted by due date. */
+function renderUpcoming() {
+  const list = document.getElementById("upcomingList");
+  const today = todayStr();
+  const upcoming = state.assignments
+    .filter(a => !a.done)
+    .sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999"))
+    .slice(0, 3);
+
+  if (upcoming.length === 0) {
+    list.innerHTML = `<div class="empty">🎉 No pending assignments. Nice work!</div>`;
+    return;
+  }
+  list.innerHTML = upcoming.map(a => {
+    const overdue = a.due && a.due < today;
+    return `
+      <li>
+        <strong>${esc(a.title)}</strong>
+        <div class="muted">${esc(a.course)} · Due ${esc(prettyDate(a.due))}
+          <span class="badge ${overdue ? "overdue" : "pending"}">${overdue ? "Overdue" : "Pending"}</span>
+        </div>
+      </li>`;
+  }).join("");
+}
+
+/** Builds the course cards on both the Dashboard and My Courses page. */
+function renderCourses() {
+  const html = state.courses.map(courseCardHTML).join("");
+  document.getElementById("dashCourses").innerHTML = html;
+  document.getElementById("allCourses").innerHTML = html;
+}
+
+/**
+ * Rebuilds the assignment checklist.
+ * Each checkbox has a data-id so the click handler knows which task it belongs to.
+ */
+function renderTasks() {
+  const list = document.getElementById("taskList");
+  if (state.assignments.length === 0) {
+    list.innerHTML = `<div class="empty">No assignments yet. Add one using the form above.</div>`;
+    return;
+  }
+  const today = todayStr();
+  list.innerHTML = state.assignments.map(a => {
+    const overdue = !a.done && a.due && a.due < today;
+    const statusClass = a.done ? "done" : overdue ? "overdue" : "pending";
+    const statusText = a.done ? "Completed" : overdue ? "Overdue" : "Pending";
+    return `
+      <li class="task ${a.done ? "done" : ""}">
+        <label>
+          <input type="checkbox" data-id="${a.id}" ${a.done ? "checked" : ""}>
+          <span class="title">${esc(a.title)}</span>
+        </label>
+        <span class="muted">${esc(a.course)} · ${esc(prettyDate(a.due))}</span>
+        <span class="badge ${statusClass}">${statusText}</span>
+      </li>`;
+  }).join("");
+}
+
+/** Fills the course dropdown on the Assignments form from the course list. */
+function renderCourseOptions() {
+  document.getElementById("taskCourse").innerHTML = state.courses
+    .map(c => `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.title)}</option>`)
+    .join("");
+}
+
+/** Calls every render function so the whole page is up to date. */
+function renderAll() {
+  renderStats();
+  renderUpcoming();
+  renderCourses();
+  renderTasks();
+}
+
+/* =====================================================================
+   5. EVENT HANDLERS (user actions)
+   ===================================================================== */
+
+/** Adds a new assignment from the form after checking the title is not empty. */
+function handleAddTask(event) {
+  event.preventDefault();
+  const titleInput = document.getElementById("taskTitle");
+  const title = titleInput.value.trim();
+
+  if (title === "") {
+    showFeedback("Please enter a task title.", "error");
+    titleInput.focus();
+    return;
+  }
+
+  state.assignments.push({
+    id: nextId++,
+    title: title,                                             // stored as plain text; escaped when displayed
+    course: document.getElementById("taskCourse").value,
+    due: document.getElementById("taskDue").value,
+    done: false
+  });
+
+  event.target.reset();   // clear the form fields
+  renderAll();
+  showFeedback("Task added: " + title, "success");
+  titleInput.focus();
+}
+
+/**
+ * Handles checkbox changes in the task list (uses event delegation:
+ * one listener on the parent <ul> instead of one per checkbox).
+ */
+function handleTaskToggle(event) {
+  if (!event.target.matches('input[type="checkbox"]')) return;
+  const id = Number(event.target.dataset.id);
+  const task = state.assignments.find(a => a.id === id);
+  if (task) {
+    task.done = event.target.checked;
+    renderAll();
+    // Re-rendering replaces the checkbox, so put keyboard focus back on it
+    document.querySelector('input[data-id="' + id + '"]').focus();
+    showFeedback(task.done ? "Marked as completed." : "Marked as pending.", "success");
+  }
+}
+
+/* =====================================================================
+   6. THEME TOGGLE (light / dark)
+   ===================================================================== */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  html.setAttribute("data-theme", isDark ? "light" : "dark");
+  document.getElementById("themeToggle").textContent = isDark ? "🌙 Dark mode" : "☀️ Light mode";
+}
+
+/* =====================================================================
+   7. START-UP: connect everything once the page is loaded
+   ===================================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  // Navigation buttons
+  document.querySelector(".nav").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-page]");
+    if (btn) showPage(btn.dataset.page);
+  });
+
+  // Add-task form and checklist
+  document.getElementById("addForm").addEventListener("submit", handleAddTask);
+  document.getElementById("taskList").addEventListener("change", handleTaskToggle);
+
+  // Theme button
+  document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+
+  // First render
+  renderCourseOptions();
+  renderAll();
+});
+</script>
+</body>
+</html>
